@@ -1,0 +1,46 @@
+[![add-on registry](https://img.shields.io/badge/DDEV-Add--on_Registry-blue)](https://addons.ddev.com)
+[![tests](https://github.com/tyler36/ddev-site-metrics-laravel/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/tyler36/ddev-site-metrics-laravel/actions/workflows/tests.yml?query=branch%3Amain)
+[![last commit](https://img.shields.io/github/last-commit/tyler36/ddev-site-metrics-laravel)](https://github.com/tyler36/ddev-site-metrics-laravel/commits)
+[![release](https://img.shields.io/github/v/release/tyler36/ddev-site-metrics-laravel)](https://github.com/tyler36/ddev-site-metrics-laravel/releases/latest)
+
+# DDEV Site Metrics Laravel
+
+## Overview
+
+This add-on adds Open Telemetry for Laravel projects. It is designed to integrate with tyler36/ddev-site-metrics.
+This is achieved by:
+
+- installing opentelemetry PHP addon.
+- configures system-level environmental variables
+
+## Installation
+
+```bash
+ddev add-on get tyler36/ddev-site-metrics-laravel
+ddev restart
+```
+
+After installation, make sure to commit the `.ddev` directory to version control.
+
+## Usage
+
+## Configuration
+
+### Environmental Variables
+
+Environmental variables need to be set early in the process.
+This addon uses `.ddev/.env` to set them for the container; variables set in `.env` are read too late and do not work.
+
+## Debugging
+
+- Confirm PHP module is installed.
+
+```shell
+$ ddev php --ri opentelemetry
+...
+opentelemetry hooks => enabled
+```
+
+## Credits
+
+**Contributed and maintained by [@tyler36](https://github.com/tyler36)**
