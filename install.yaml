@@ -1,0 +1,19 @@
+name: site-metrics-laravel
+
+project_files:
+  - config.site-metrics-laravel.yaml
+
+post_install_actions:
+  - #ddev-nodisplay
+    #ddev-description:Set default environment variables
+  - ddev dotenv set .ddev/.env --otel-php-autoload-enabled=true > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env --otel-service-name=laravel > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env --otel-traces-exporter=console > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env --otel-metric-exporter=none > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env --otel-logs-exporter=none > /dev/null 2>&1
+  - #ddev-description:Restart to activate PHP module
+  - ddev restart
+  - #ddev-description:Add required composer packages
+  - ddev composer require open-telemetry/sdk open-telemetry/opentelemetry-auto-laravel --dev
+
+ddev_version_constraint: '>= v1.24.3'
