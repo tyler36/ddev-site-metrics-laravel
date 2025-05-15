@@ -1,0 +1,58 @@
+// ##ddev-generated
+
+/**
+ * 'otelcol.exporter.otlphttp' accepts telemetry data from other otelcol components and writes them over the network using the OTLP HTTP protocol.
+ * https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.otlphttp/
+ */
+otelcol.exporter.otlphttp "default" {
+  client {
+    endpoint = "alloy:4317"
+  }
+}
+
+/**
+ * 'otelcol.receiver.otlp' accepts OTLP-formatted data over the network and forwards it to other 'otelcol.*' components.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.receiver.otlp/
+ */
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "alloy:4317"
+  }
+
+  http {
+    endpoint = "alloy:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.otlphttp.default.input]
+    logs    = [otelcol.exporter.otlphttp.default.input]
+    traces  = [otelcol.exporter.otlphttp.default.input]
+  }
+}
+
+/**
+ * 'otelcol.processor.batch' accepts telemetry data from other otelcol components and places them into batches.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.processor.batch/
+ */
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.default.input]
+    logs    = [otelcol.exporter.otlphttp.default.input]
+    traces  = [otelcol.exporter.otlphttp.default.input]
+  }
+}
+
+/**
+ * 'otelcol.processor.memory_limiter' is used to prevent out of memory situations on a telemetry pipeline by performing periodic checks of memory usage.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.processor.memory_limiter/
+ */
+otelcol.processor.memory_limiter "default" {
+  check_interval = "1s"
+  limit          = "1GiB"
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
