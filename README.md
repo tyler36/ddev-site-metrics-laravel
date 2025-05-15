@@ -24,6 +24,30 @@ After installation, make sure to commit the `.ddev` directory to version control
 
 ## Usage
 
+Traces are automatically injected into PHP calls.
+This is configured via `.ddev/.env`
+
+```conf
+OTEL_PHP_AUTOLOAD_ENABLED="true"
+OTEL_SERVICE_NAME="laravel"
+OTEL_METRIC_EXPORTER="none"
+OTEL_LOGS_EXPORTER="none"
+OTEL_TRACES_EXPORTER="console"
+```
+
+- To disable, update `.ddev/.env` and restart DDEV.
+
+```conf
+OTEL_PHP_AUTOLOAD_ENABLED="false"
+```
+
+- To send traces to ddev-site-metrics, add update `.ddev/.env` and restart DDEV.
+
+```conf
+OTEL_TRACES_EXPORTER="otlp"
+OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+```
+
 ## Configuration
 
 ### Environmental Variables
