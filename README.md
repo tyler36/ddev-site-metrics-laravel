@@ -25,7 +25,7 @@ After installation, make sure to commit the `.ddev` directory to version control
 ## Usage
 
 Traces are automatically injected into PHP calls.
-This is configured via `.ddev/.env`
+This is configured via `.ddev/.env.web`.
 
 ```conf
 OTEL_PHP_AUTOLOAD_ENABLED="true"
@@ -35,13 +35,13 @@ OTEL_LOGS_EXPORTER="none"
 OTEL_TRACES_EXPORTER="console"
 ```
 
-- To disable, update `.ddev/.env` and restart DDEV.
+- To disable, update `.ddev/.env.web` and restart DDEV.
 
 ```conf
 OTEL_PHP_AUTOLOAD_ENABLED="false"
 ```
 
-- To send traces to ddev-site-metrics, add update `.ddev/.env` and restart DDEV.
+- To send traces to ddev-site-metrics, add update `.ddev/.env.web` and restart DDEV.
 
 ```conf
 OTEL_TRACES_EXPORTER="otlp"
@@ -53,7 +53,8 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
 ### Environmental Variables
 
 Environmental variables need to be set early in the process.
-This addon uses `.ddev/.env` to set them for the container; variables set in `.env` are read too late and do not work.
+This addon uses `.ddev/.env.web` to set them for the container; variables set in `${DDEV_PROJECT_ROOT}/.env` are read too late and do not work.
+Additionally, we set them in the `web` container so they do not leak into other containers, which would occur if they were in `.ddev/.env`.
 
 ## Debugging
 
