@@ -42,14 +42,12 @@ health_checks() {
   ddev php --ri opentelemetry | grep "opentelemetry hooks => enabled"
 
   # Environmental variables are set
-  run ddev dotenv get .ddev/.env --otel-php-autoload-enabled
+  run ddev dotenv get .ddev/.env.web --otel-php-autoload-enabled
   assert_output true
 
   # It writes traces
   run curl -sfI https://${PROJNAME}.ddev.site
   assert_output --partial "HTTP/2 200"
-  # Service name is set in `.ddev/.env` in `OTEL_SERVICE_NAME`
-  ddev logs -s web | \grep --color=auto '"service.name": "laravel"'
 }
 
 teardown() {
@@ -78,6 +76,28 @@ install_laravel() {
   run ddev restart -y
   assert_success
   health_checks
+}
+
+@test "it can collect traces" {
+  set -eu -o pipefail
+
+  install_laravel
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev dotenv set .ddev/.env.web --otel-traces-exporter=console
+  assert_success
+
+  run ddev restart -y
+  assert_success
+
+  # Ensure traces appear in logs
+  run curl -sfI https://${PROJNAME}.ddev.site
+  assert_output --partial "HTTP/2 200"
+  # Service name is set in `.ddev/.env` in `OTEL_SERVICE_NAME`
+  ddev logs -s web | \grep --color=auto '"service.name": "laravel"'
 }
 
 # bats test_tags=release
