@@ -10,10 +10,10 @@ post_install_actions:
   - ddev composer require open-telemetry/sdk open-telemetry/opentelemetry-auto-laravel open-telemetry/exporter-otlp --dev
   - #ddev-nodisplay
     #ddev-description:Set default environment variables
-  - ddev dotenv set .ddev/.env --otel-php-autoload-enabled=true > /dev/null 2>&1
-  - ddev dotenv set .ddev/.env --otel-service-name=laravel > /dev/null 2>&1
-  - ddev dotenv set .ddev/.env --otel-metric-exporter=none > /dev/null 2>&1
-  - ddev dotenv set .ddev/.env --otel-logs-exporter=none > /dev/null 2>&1
-  - ddev dotenv set .ddev/.env --otel-traces-exporter=console > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env.web --otel-php-autoload-enabled=true > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env.web --otel-service-name=laravel > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env.web --otel-metric-exporter=none > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env.web --otel-logs-exporter=none > /dev/null 2>&1
+  - ddev dotenv set .ddev/.env.web --otel-traces-exporter=console > /dev/null 2>&1
 
 ddev_version_constraint: '>= v1.24.3'
