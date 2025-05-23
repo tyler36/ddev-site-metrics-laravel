@@ -129,6 +129,33 @@ install_laravel() {
   assert_output --partial '"totalEntriesReturned":1'
 }
 
+@test "it can collect logs" {
+  set -eu -o pipefail
+
+  install_laravel
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev dotenv set .ddev/.env.web --otel-logs-exporter=console
+  run ddev dotenv set .ddev/.env.web --otel-traces-exporter=none
+  run ddev dotenv set .ddev/.env.web --otel-metric-exporter=none
+  run ddev restart -y
+  assert_success
+
+  # Access site to generate logs; wait for 10 seconds for processing.
+  run curl -sfI https://${PROJNAME}.ddev.site
+  assert_output --partial "HTTP/2 200"
+  sleep 10
+
+  # Ensure logs appear in logs
+  run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello")'
+  assert_success
+  assert_output --partial '"body": "hello"'
+  assert_output --partial '"severity_text": "info"'
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
