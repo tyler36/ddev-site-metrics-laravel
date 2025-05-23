@@ -100,13 +100,44 @@ install_laravel() {
   ddev logs -s web | \grep --color=auto '"service.name": "laravel"'
 }
 
+@test "it can collect traces through Grafana workflow" {
+  set -eu -o pipefail
+
+  install_laravel
+
+  echo "# ddev add-on get tyler36/ddev-site-metrics with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "tyler36/ddev-site-metrics"
+  assert_success
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev restart -y
+  assert_success
+
+  # Access site to generate at least 1 extracted log entry.
+  run curl -sfI https://${PROJNAME}.ddev.site
+  assert_success
+  # Wait for an arbitrary amount of time for the trace to propagate.
+  sleep 15
+
+  # Grafana Loki uses Trace discovery through logs
+  export LOKI_SERVER="http://grafana-loki:3100"
+  run ddev exec curl -s "${LOKI_SERVER}/loki/api/v1/query" --data-urlencode 'query=sum(rate({service_name="laravel"}[1m])) by (level)'
+  assert_success
+  assert_output --partial '"totalEntriesReturned":1'
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
   echo "# ddev add-on get ${GITHUB_REPO} with project ${PROJNAME} in $(pwd)" >&3
   run ddev add-on get "${GITHUB_REPO}"
   assert_success
+
   run ddev restart -y
   assert_success
+
   health_checks
 }
