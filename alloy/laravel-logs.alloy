@@ -1,0 +1,38 @@
+// ##ddev-generated
+
+/**
+ * This file contains the pipeline for Laravel logs.
+ * We map the laravel path in a docker-compose file, then use "local.file_match" to read them.
+ *
+ * 'local.file_match' discovers files on the local filesystem using glob patterns and the doublestar library.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/local/local.file_match/
+ */
+local.file_match "laravel_logs" {
+  path_targets = [{
+    "__path__" = "/var/log/laravel/**/*.log",
+    "service_name" = "laravel",
+  }]
+  sync_period = "10s"
+}
+
+/**
+ * loki.source.file reads log entries from files and forwards them to other loki.* components.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.file/
+ */
+loki.source.file "laravel_logs" {
+  targets = local.file_match.laravel_logs.targets
+  forward_to = [loki.process.laravel_multiline.receiver]
+}
+
+/**
+ * Parses multiline Laravel logs.
+ * Laravel log entries typically start with a timestamp like: [2024-05-19 14:22:31]
+ */
+loki.process "laravel_multiline" {
+  stage.multiline {
+    firstline = "^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\]"
+    max_wait_time   = "3s"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}

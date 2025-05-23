@@ -2,6 +2,8 @@ name: site-metrics-laravel
 
 project_files:
   - config.site-metrics-laravel.yaml
+  - docker-compose.laravel-logs.yaml
+  - alloy/laravel-logs.alloy
 
 post_install_actions:
   - #ddev-description:Restart to activate PHP module
