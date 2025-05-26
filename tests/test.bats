@@ -185,7 +185,7 @@ install_laravel() {
 
   run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
     --data-urlencode 'query={service_name="laravel"}' \
-    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1_000_000_000)) \
+    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
     --data-urlencode 'end='$(date +%s%N) \
     --data-urlencode 'limit=1000' | jq -r '.data.result[].values[][1]'
   assert_success
@@ -218,7 +218,7 @@ install_laravel() {
 
   run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
     --data-urlencode 'query={service_name="laravel"}' \
-    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1_000_000_000)) \
+    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
     --data-urlencode 'end='$(date +%s%N) \
     --data-urlencode 'limit=1000' | jq -r '.data.result[].values[][1]'
   assert_success
