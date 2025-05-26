@@ -219,7 +219,7 @@ install_laravel() {
     --data-urlencode 'query={service_name="laravel"}' \
     --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
     --data-urlencode 'end='$(date +%s%N) \
-    --data-urlencode 'limit=1000' | jq -r '.data.result[].values[][1]'
+    --data-urlencode 'limit=1000'
   assert_success
 
   # Grafana Loki can parse the default Laravel log file; it displays the raw log level and message.
