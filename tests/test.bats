@@ -56,6 +56,11 @@ teardown() {
   [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
 }
 
+setup_project() {
+  install_laravel
+  ddev addon get tyler36/ddev-site-metrics
+}
+
 install_laravel() {
   ddev config --project-type=laravel --docroot=public
   ddev start
@@ -67,7 +72,7 @@ install_laravel() {
 @test "install from directory" {
   set -eu -o pipefail
 
-  install_laravel
+  setup_project
 
   echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
   run ddev add-on get "${DIR}"
@@ -81,7 +86,7 @@ install_laravel() {
 @test "it can collect traces" {
   set -eu -o pipefail
 
-  install_laravel
+  setup_project
 
   echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
   run ddev add-on get "${DIR}"
@@ -129,9 +134,104 @@ install_laravel() {
   assert_output --partial '"totalEntriesReturned":1'
 }
 
+@test "it can collect logs" {
+  set -eu -o pipefail
+
+  setup_project
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev dotenv set .ddev/.env.web --otel-logs-exporter=console
+  run ddev dotenv set .ddev/.env.web --otel-traces-exporter=none
+  run ddev dotenv set .ddev/.env.web --otel-metric-exporter=none
+  run ddev restart -y
+  assert_success
+
+  # Access site to generate logs; wait for 10 seconds for processing.
+  run curl -sfI https://${PROJNAME}.ddev.site
+  assert_output --partial "HTTP/2 200"
+  sleep 10
+
+  # Ensure logs appear in logs
+  run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello")'
+  assert_success
+  assert_output --partial '"body": "hello"'
+  assert_output --partial '"severity_text": "info"'
+}
+
+@test "it can collect logs via OTEL collection" {
+  set -eu -o pipefail
+
+  setup_project
+
+  echo "# ddev add-on get tyler36/ddev-site-metrics with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "tyler36/ddev-site-metrics"
+  assert_success
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev restart -y
+  assert_success
+
+  # Access site to generate at least 1 extracted log entry.
+  run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello world")'
+  assert_success
+  # Wait for an arbitrary amount of time for the trace to propagate.
+  sleep 5
+
+  run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
+    --data-urlencode 'query={service_name="laravel"}' \
+    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
+    --data-urlencode 'end='$(date +%s%N) \
+    --data-urlencode 'limit=1000'
+  assert_success
+  # Grafana Loki uses Trace discovery through logs; the message is extracted into the body.
+  assert_output --partial '\"body\":\"hello world\"'
+}
+
+@test "it can collect logs via parsing the Laravel log file" {
+  set -eu -o pipefail
+
+  setup_project
+
+  echo "# ddev add-on get tyler36/ddev-site-metrics with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "tyler36/ddev-site-metrics"
+  assert_success
+
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  run ddev restart -y
+  assert_success
+
+  # Access site to generate at least 1 extracted log entry.
+  run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello world")'
+  assert_success
+  # Wait for an arbitrary amount of time for the trace to propagate.
+  sleep 20
+
+  run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
+    --data-urlencode 'query={service_name="laravel"}' \
+    --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
+    --data-urlencode 'end='$(date +%s%N) \
+    --data-urlencode 'limit=1000'
+  assert_success
+
+  # Grafana Loki can parse the default Laravel log file; it displays the raw log level and message.
+  assert_output --partial 'local.INFO: hello world'
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
+
+  setup_project
+
   echo "# ddev add-on get ${GITHUB_REPO} with project ${PROJNAME} in $(pwd)" >&3
   run ddev add-on get "${GITHUB_REPO}"
   assert_success
