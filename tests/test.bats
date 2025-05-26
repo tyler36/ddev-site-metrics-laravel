@@ -213,7 +213,7 @@ install_laravel() {
   run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello world")'
   assert_success
   # Wait for an arbitrary amount of time for the trace to propagate.
-  sleep 10
+  sleep 20
 
   run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
     --data-urlencode 'query={service_name="laravel"}' \
