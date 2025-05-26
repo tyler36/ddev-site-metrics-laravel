@@ -181,17 +181,16 @@ install_laravel() {
   run ddev artisan tinker --execute='\Illuminate\Support\Facades\Log::info("hello world")'
   assert_success
   # Wait for an arbitrary amount of time for the trace to propagate.
-  sleep 10
+  sleep 5
 
   run ddev exec curl -G http://grafana-loki:3100/loki/api/v1/query_range \
     --data-urlencode 'query={service_name="laravel"}' \
     --data-urlencode 'start='$(($(date +%s%N) - 3600 * 1000000000)) \
     --data-urlencode 'end='$(date +%s%N) \
-    --data-urlencode 'limit=1000' | jq -r '.data.result[].values[][1]'
+    --data-urlencode 'limit=1000'
   assert_success
-
   # Grafana Loki uses Trace discovery through logs; the message is extracted into the body.
-  assert_output --partial '"body":"hello world"'
+  assert_output --partial '\"body\":\"hello world\"'
 }
 
 @test "it can collect logs via parsing the Laravel log file" {
