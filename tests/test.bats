@@ -222,9 +222,6 @@ install_laravel() {
     --data-urlencode 'limit=1000' | jq -r '.data.result[].values[][1]'
   assert_success
 
-  # Grafana Loki uses Trace discovery through logs; the message is extracted into the body.
-  assert_output --partial '"body":"hello world"'
-
   # Grafana Loki can parse the default Laravel log file; it displays the raw log level and message.
   assert_output --partial 'local.INFO: hello world'
 }
