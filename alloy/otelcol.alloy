@@ -1,6 +1,9 @@
 // ##ddev-generated
 
 otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint="grafana-alloy:4317"
+  }
   http {
     endpoint="grafana-alloy:4318"
   }
@@ -18,7 +21,7 @@ otelcol.receiver.otlp "default" {
 otelcol.processor.batch "default" {
   output {
     logs  = [otelcol.exporter.loki.default.input]
-    traces  = [otelcol.connector.spanlogs.default.input, otelcol.exporter.otlphttp.tempo.input]
+    traces  = [otelcol.connector.spanlogs.default.input, otelcol.exporter.otlp.tempo.input]
   }
 }
 
@@ -84,6 +87,24 @@ otelcol.exporter.loki "default" {
   forward_to = [loki.write.default.receiver]
 }
 
+/**
+ * 'otelcol.exporter.otlp' accepts telemetry data from other otelcol components and writes them over the network using the OTLP gRPC protocol.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.otlp/
+ */
+otelcol.exporter.otlp "tempo" {
+    client {
+        endpoint = "grafana-tempo:4317"
+        tls {
+            insecure             = true
+            insecure_skip_verify = true
+        }
+    }
+}
+
+/**
+ * 'otelcol.exporter.otlphttp' accepts telemetry data from other otelcol components and writes them over the network using the OTLP HTTP protocol.
+ * @See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.otlphttp/
+ */
 otelcol.exporter.otlphttp "tempo" {
     client {
         endpoint = "http://grafana-tempo:4318"
